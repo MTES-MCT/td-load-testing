@@ -125,22 +125,159 @@ bsd_query = """
         }
         ... on Bsdasri {
           id
+          dasristatus: status
+            isDraft
+            
+               emitter {
+          company {
+            siret
+        
+          }
+     
+          emission {
+            packagings {
+              type
+              other
+              quantity
+              volume
+            }
+            weight {
+              value
+              isEstimate
+            }
 
-          emitter {
-            company {
-              siret
+            signature {
+              author
+              date
             }
           }
+        }
+              transporter {
+          company {
+            siret
+          }
+
+          recepisse {
+            number
+            department
+            validityLimit
+          }
+          transport {
+            handedOverAt
+            takenOverAt
+            mode
+
+            volume
+            weight {
+              value
+              isEstimate
+            }
+            packagings {
+              type
+              other
+              quantity
+              volume
+            }
+
+            acceptation {
+              status
+              refusalReason
+
+              refusedWeight
+            }
+         
+          }
+        }
+          destination {
+          company {
+            siret
+            name
+    
+          }
+          reception {
+            date
+
+            volume
+
+            acceptation {
+              status
+              refusalReason
+              refusedWeight
+            }
+         
+          }
+          operation {
+            date
+            code
+          
+          }
+        }
+            createdAt
+        updatedAt
         }
         ... on Bsvhu {
-          id
+        id
+        isDraft
+        identification {
+          numbers
+          type
+        }
 
-          emitter {
-            company {
-              siret
-            }
+        emitter {
+          agrementNumber
+          company {
+            siret
           }
         }
+
+        transporter {
+          company {
+            siret
+            name
+            address
+            contact
+            mail
+            phone
+            vatNumber
+          }
+          recepisse {
+            number
+          }
+        }
+        destination {
+          type
+          agrementNumber
+          company {
+            siret
+            name
+            address
+            contact
+            mail
+            phone
+            vatNumber
+          }
+          plannedOperationCode
+          reception {
+            date
+
+            quantity
+
+            weight
+
+            acceptationStatus
+
+            refusalReason
+          }
+          operation {
+            date
+            code
+          }
+        }
+        weight {
+          value
+        }
+      }
+          
         ... on Bsff {
           id
           bsffStatus: status

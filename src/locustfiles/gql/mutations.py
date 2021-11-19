@@ -69,3 +69,24 @@ form_create = """
     }
   }
 """
+
+dasri_create = """
+mutation BsdasriCreate($input: BsdasriInput!) {
+  createBsdasri(input: $input) {
+    id
+    waste {
+      code
+    }
+    isDraft
+    type
+
+    status
+    createdAt
+    updatedAt
+    ecoOrganisme {
+      siret
+    }
+  }
+}
+
+"""

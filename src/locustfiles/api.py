@@ -1,4 +1,4 @@
-from locust import task, FastHttpUser
+from locust import task, FastHttpUser, constant
 from .gql.queries import (
     me_query,
     bsd_query,
@@ -10,9 +10,10 @@ from .gql.queries import (
     formslifecycle_query,
     light_dasri_query,
 )
-from .gql.mutations import form_create
+from .gql.mutations import form_create, dasri_create
 import random
-from ..locust_settings import DEFAULT_PASS, user_email_tpl
+
+from .settings.locust_settings import DEFAULT_PASS, user_email_tpl
 
 
 form_query = base_form_query.replace("#extra", "")
@@ -39,7 +40,8 @@ class TDUserMixin:
 
 
 class UIUser(TDUserMixin, FastHttpUser):
-    # wait_time = constant(1)
+    wait_time = constant(1)
+
     def on_start(self):
         self.client.post(
             "login",
@@ -119,7 +121,11 @@ class UIUser(TDUserMixin, FastHttpUser):
 
     @task
     def forms(self):
-        self.client.post("", json={"query": form_query}, name="ui-forms-default")
+        self.client.post(
+            "",
+            json={"query": form_query, "variables": {"siret": self.siret}},
+            name="ui-forms-default",
+        )
 
 
 class ApiUser(TDUserMixin, FastHttpUser):
@@ -216,3 +222,40 @@ class ApiUser(TDUserMixin, FastHttpUser):
             name="api-form-create",
             headers=self.headers,
         )
+
+    @task
+    def dasri_create(self):
+        with self.client.post(
+            "",
+            json={
+                "query": dasri_create,
+                "variables": {
+                    "input": {
+                        "waste": {"adr": "lorem", "code": "18 01 03*"},
+                        "emitter": {
+                            "company": {
+                                "siret": self.siret,
+                                "name": "lorem",
+                                "address": "rue x",
+                                "phone": "123",
+                                "mail": "user@test.fr",
+                                "contact": "john doe",
+                            },
+                            "emission": {
+                                "packagings": [
+                                    {
+                                        "type": "BOITE_CARTON",
+                                        "volume": 22,
+                                        "quantity": 88,
+                                    }
+                                ]
+                            },
+                        },
+                    },
+                },
+            },
+            name="api-dasri-create",
+            headers=self.headers,
+            catch_response=True,
+        ) as res:
+            print(res.json())
