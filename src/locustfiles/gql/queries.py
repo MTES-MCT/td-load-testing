@@ -1132,9 +1132,7 @@ base_bsda_query = """query Bsdas {
             }
           }
         }
-        groupedIn {
-          id
-        }
+     
         grouping {
           id
         }
