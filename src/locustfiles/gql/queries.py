@@ -964,10 +964,7 @@ query Bsffs {
         repackagedIn {
           id
         }
-
-        groupedIn {
-          id
-        }
+ 
       }
     }
   }
@@ -1133,9 +1130,6 @@ base_bsda_query = """query Bsdas {
           }
         }
      
-        grouping {
-          id
-        }
         forwarding {
           id
         }
