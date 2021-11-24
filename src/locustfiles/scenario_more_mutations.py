@@ -15,14 +15,6 @@ from .mixins import TDUserMixin
 form_query = base_form_query.replace("#extra", "")
 
 
-# def on_start(self):
-#     self.client.post(
-#         "login",
-#         json={"email": self.email, "password": DEFAULT_PASS},
-#         name="ui-login",
-#     )
-
-
 class UIUser(TDUserMixin, HttpUser):
     def on_start(self):
         self.client.post(
