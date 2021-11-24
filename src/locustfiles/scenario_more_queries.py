@@ -1,4 +1,4 @@
-from locust import task, FastHttpUser, constant
+from locust import task, FastHttpUser
 from .gql.queries import (
     me_query,
     bsd_query,
@@ -11,37 +11,15 @@ from .gql.queries import (
     light_dasri_query,
 )
 from .gql.mutations import form_create, dasri_create
-import random
 
 from .settings.locust_settings import DEFAULT_PASS, user_email_tpl
-
+from .mixins import TDUserMixin
 
 form_query = base_form_query.replace("#extra", "")
 form_query_filter_code = base_form_query.replace("#extra", 'wasteCode: "06 01 01*"')
 
 
-def get_count(res):
-    try:
-        count = res.json()["data"]["bsds"]["totalCount"]
-        print(count)
-    except TypeError:
-        print("Error")
-
-
-class TDUserMixin:
-    def __init__(self, environment):
-        super().__init__(environment)
-        i = random.randint(1, 100)
-        self.siret = f"{i:014d}" if i <= 100 else f"{1:014d}"
-        self.email = user_email_tpl.format(i)
-        token = f"token_{i}"
-        self.headers = {"Authorization": f"bearer {token}"}
-        print(self.email, self.siret)
-
-
 class UIUser(TDUserMixin, FastHttpUser):
-    wait_time = constant(1)
-
     def on_start(self):
         self.client.post(
             "login",
@@ -129,8 +107,6 @@ class UIUser(TDUserMixin, FastHttpUser):
 
 
 class ApiUser(TDUserMixin, FastHttpUser):
-    # wait_time = constant(1)
-
     @task
     def me(self):
         self.client.post(
