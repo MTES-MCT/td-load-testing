@@ -120,20 +120,16 @@ bsd_query = """
                 ecoOrganisme {
                   name
                   siret
-                } 
-        
+                }
         }
         ... on Bsdasri {
           id
           dasristatus: status
             isDraft
-            
                emitter {
           company {
             siret
-        
           }
-     
           emission {
             packagings {
               type
@@ -145,7 +141,6 @@ bsd_query = """
               value
               isEstimate
             }
-
             signature {
               author
               date
@@ -185,31 +180,25 @@ bsd_query = """
 
               refusedWeight
             }
-         
           }
         }
           destination {
           company {
             siret
             name
-    
           }
           reception {
             date
-
             volume
-
             acceptation {
               status
               refusalReason
               refusedWeight
             }
-         
           }
           operation {
             date
             code
-          
           }
         }
             createdAt
@@ -222,7 +211,6 @@ bsd_query = """
           numbers
           type
         }
-
         emitter {
           agrementNumber
           company {
@@ -277,7 +265,6 @@ bsd_query = """
           value
         }
       }
-          
         ... on Bsff {
           id
           bsffStatus: status
@@ -325,9 +312,46 @@ bsd_query = """
 
 """
 
-base_form_query = """
+base_forms_query = """
 query Forms($siret: String){
-  forms(siret: $siret) {
+  forms(siret: $siret, #extra) {
+    id
+    readableId
+    emitter {
+      company {
+        siret
+      }
+    }
+    transporter {
+      company {
+        siret
+      }
+    }
+    recipient {
+      company {
+        siret
+      }
+    }
+    wasteDetails {
+      code
+      name
+      onuCode
+      packagingInfos {
+        type
+        other
+        quantity
+      }
+      quantity
+      quantityType
+      consistence
+    }
+  }
+}
+"""
+
+base_form_query = """
+query Form($id: ID){
+  form(id: $id) {
     id
     readableId
     emitter {
@@ -507,19 +531,14 @@ query {
         id
         status
         type
-
         waste {
           code
           adr
-
         }
-
         emitter {
           company {
             siret
-        
           }
-     
           emission {
             packagings {
               type
@@ -567,22 +586,18 @@ query {
               quantity
               volume
             }
-
             acceptation {
               status
               refusalReason
 
               refusedWeight
             }
-         
           }
         }
-
         destination {
           company {
             siret
             name
-    
           }
           reception {
             date
@@ -594,18 +609,14 @@ query {
               refusalReason
               refusedWeight
             }
-         
           }
           operation {
             date
             code
-          
           }
         }
-
         createdAt
         updatedAt
-
       }
     }
   }
@@ -765,7 +776,6 @@ query {
 }
 
 """
-
 
 base_vhu_query = """
  query GetBsvhus {
@@ -964,7 +974,6 @@ query Bsffs {
         repackagedIn {
           id
         }
- 
       }
     }
   }
@@ -972,7 +981,6 @@ query Bsffs {
 
 
 """
-
 
 base_bsda_query = """query Bsdas {
   bsdas {
@@ -1129,7 +1137,6 @@ base_bsda_query = """query Bsdas {
             }
           }
         }
-     
         forwarding {
           id
         }

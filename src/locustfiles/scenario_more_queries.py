@@ -1,8 +1,9 @@
-from locust import task, FastHttpUser
+from locust import task, FastHttpUser, constant
 from .gql.queries import (
     me_query,
     bsd_query,
     base_form_query,
+    base_forms_query,
     base_dasri_query,
     base_bsda_query,
     base_bsff_query,
@@ -10,22 +11,49 @@ from .gql.queries import (
     formslifecycle_query,
     light_dasri_query,
 )
-from .gql.mutations import form_create, dasri_create
-
-from .settings.locust_settings import DEFAULT_PASS, user_email_tpl
+from .gql.mutations import form_create, dasri_create, form_update
+import random
+from .settings.locust_settings import DEFAULT_PASS
 from .mixins import TDUserMixin
 
-form_query = base_form_query.replace("#extra", "")
-form_query_filter_code = base_form_query.replace("#extra", 'wasteCode: "06 01 01*"')
+forms_query = base_forms_query.replace("#extra", "")
+
+form_query_filter_code = base_forms_query.replace("#extra", 'wasteCode: "06 01 01*"')
+form_query_filter_draft = base_forms_query.replace("#extra", "status: DRAFT")
+form_query = base_form_query  # .replace("#extra", "")
+
+REDIRECT_LOGIN_URL = "http://ui-td.test/"
+
+
+def random_custom_id():
+    return "".join([str(random.randint(1, 9)) for _ in range(6)])
 
 
 class UIUser(TDUserMixin, FastHttpUser):
+    wait_time = constant(0.5)
+
     def on_start(self):
-        self.client.post(
+        with self.client.post(
             "login",
             json={"email": self.email, "password": DEFAULT_PASS},
             name="ui-login",
-        )
+            catch_response=True,
+        ) as res:
+            if res.url == REDIRECT_LOGIN_URL:
+                res.success()
+
+        res_all = self.all_forms()
+        forms = res_all.json()["data"]["forms"]
+        self.bsddIds = [el["id"] for el in forms]
+
+        res_draft = self.draft_forms()
+
+        try:
+            forms = res_draft.json()["data"]["forms"]
+
+            self.editableBsddIds = [el["id"] for el in forms]
+        except KeyError:
+            print(res_draft.json())
 
     @task
     def me(self):
@@ -97,29 +125,85 @@ class UIUser(TDUserMixin, FastHttpUser):
             name="ui-bsds-collected-for",
         )
 
-    @task
-    def forms(self):
+    @task(10)
+    def form_update(self):
+        if not self.editableBsddIds:
+            return
+        custom_id = random_custom_id()
+
+        bsd_id = random.choice(self.editableBsddIds)
+
+        res = self.client.post(
+            "",
+            json={
+                "query": form_update,
+                "variables": {"updateFormInput": {"customId": custom_id, "id": bsd_id}},
+            },
+            name="ui-form-update",
+        )
+        try:
+            if res.json()["data"]["updateForm"]["customId"] != custom_id:
+                print(
+                    "api-form-update",
+                    res.json()["data"]["updateForm"]["customId"] == custom_id,
+                    bsd_id,
+                    custom_id,
+                    self.email,
+                )
+        except KeyError:
+            print("api-form-update error", res.json()["errors"])
+
+    @task(5)
+    def form(self):
+        if not self.bsddIds:
+            return
+
         self.client.post(
             "",
-            json={"query": form_query, "variables": {"siret": self.siret}},
-            name="ui-forms-default",
+            json={
+                "query": form_query,
+                "variables": {"id": random.choice(self.bsddIds)},
+            },
+            name="ui-form",
         )
 
 
 class ApiUser(TDUserMixin, FastHttpUser):
+    wait_time = constant(0.5)
+
     @task
     def me(self):
         self.client.post(
             "", json={"query": me_query}, headers=self.headers, name="api-me"
         )
 
-    @task
+    def on_start(self):
+        res = self.forms()
+        forms = res.json()["data"]["forms"]
+        self.bsddIds = [el["id"] for el in forms]
+
+        res = self.draft_forms()
+
+        forms = res.json()["data"]["forms"]
+        self.editableBsddIds = [el["id"] for el in forms]
+
+    @task(10)
     def forms(self):
+        return self.all_forms(name="api-forms-default")
+
+    @task(5)
+    def form(self):
+        if not self.bsddIds:
+            return
+
         self.client.post(
             "",
-            json={"query": form_query, "variables": {"siret": self.siret}},
+            json={
+                "query": form_query,
+                "variables": {"id": random.choice(self.bsddIds)},
+            },
             headers=self.headers,
-            name="api-forms-default",
+            name="api-form",
         )
 
     @task
@@ -140,6 +224,7 @@ class ApiUser(TDUserMixin, FastHttpUser):
             name="api-forms-filter-waste_code",
         )
 
+    #
     @task
     def bsdasris_full(self):
         self.client.post(
@@ -176,6 +261,7 @@ class ApiUser(TDUserMixin, FastHttpUser):
             name="api-bsdas",
         )
 
+    #
     @task
     def bsff(self):
         self.client.post(
@@ -196,6 +282,22 @@ class ApiUser(TDUserMixin, FastHttpUser):
                 },
             },
             name="api-form-create",
+            headers=self.headers,
+        )
+
+    @task(20)
+    def form_update(self):
+        if not self.editableBsddIds:
+            return
+        custom_id = random_custom_id()
+        bsd_id = random.choice(self.editableBsddIds)
+        self.client.post(
+            "",
+            json={
+                "query": form_update,
+                "variables": {"updateFormInput": {"customId": custom_id, "id": bsd_id}},
+            },
+            name="api-form-update",
             headers=self.headers,
         )
 

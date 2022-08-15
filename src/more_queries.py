@@ -1,1 +1,1 @@
-from locustfiles.scenario_more_queries import *
+from locustfiles.scenario_more_queries import *  # noqa
