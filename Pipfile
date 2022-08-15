@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-locust = "==2.9.0"
+locust = "==2.11.0"
 
 [dev-packages]
 black = "*"
