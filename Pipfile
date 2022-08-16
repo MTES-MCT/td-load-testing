@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 locust = "==2.11.0"
+structlog = "*"
 
 [dev-packages]
 black = "*"

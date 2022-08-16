@@ -13,16 +13,18 @@ from .gql.queries import (
 )
 from .gql.mutations import form_create, dasri_create, form_update
 import random
-from .settings.locust_settings import DEFAULT_PASS
+from .settings.locust_settings import DEFAULT_PASS, REDIRECT_LOGIN_URL
 from .mixins import TDUserMixin
+
+import structlog
+
+logger = structlog.get_logger()
 
 forms_query = base_forms_query.replace("#extra", "")
 
 form_query_filter_code = base_forms_query.replace("#extra", 'wasteCode: "06 01 01*"')
 form_query_filter_draft = base_forms_query.replace("#extra", "status: DRAFT")
 form_query = base_form_query  # .replace("#extra", "")
-
-REDIRECT_LOGIN_URL = "http://ui-td.test/"
 
 
 def random_custom_id():
@@ -41,19 +43,10 @@ class UIUser(TDUserMixin, FastHttpUser):
         ) as res:
             if res.url == REDIRECT_LOGIN_URL:
                 res.success()
+            else:
+                logger.error("login-error", email=self.email, url=res.url)
 
-        res_all = self.all_forms()
-        forms = res_all.json()["data"]["forms"]
-        self.bsddIds = [el["id"] for el in forms]
-
-        res_draft = self.draft_forms()
-
-        try:
-            forms = res_draft.json()["data"]["forms"]
-
-            self.editableBsddIds = [el["id"] for el in forms]
-        except KeyError:
-            print(res_draft.json())
+        self.get_user_forms()
 
     @task
     def me(self):
@@ -141,17 +134,17 @@ class UIUser(TDUserMixin, FastHttpUser):
             },
             name="ui-form-update",
         )
+        logger.msg("ui-form-update", id=bsd_id, custom_id=custom_id)
         try:
             if res.json()["data"]["updateForm"]["customId"] != custom_id:
-                print(
-                    "api-form-update",
-                    res.json()["data"]["updateForm"]["customId"] == custom_id,
-                    bsd_id,
-                    custom_id,
-                    self.email,
+                logger.error(
+                    "api-form-update-fail",
+                    bsd_id=bsd_id,
+                    custom_id=custom_id,
+                    user_email=self.email,
                 )
         except KeyError:
-            print("api-form-update error", res.json()["errors"])
+            logger.error("api-form-update error", response=res.json()["errors"])
 
     @task(5)
     def form(self):
@@ -171,6 +164,10 @@ class UIUser(TDUserMixin, FastHttpUser):
 class ApiUser(TDUserMixin, FastHttpUser):
     wait_time = constant(0.5)
 
+    def __init__(self, environment):
+        super().__init__(environment)
+        self.headers = {"Authorization": f"bearer {self.token}"}
+
     @task
     def me(self):
         self.client.post(
@@ -178,14 +175,7 @@ class ApiUser(TDUserMixin, FastHttpUser):
         )
 
     def on_start(self):
-        res = self.forms()
-        forms = res.json()["data"]["forms"]
-        self.bsddIds = [el["id"] for el in forms]
-
-        res = self.draft_forms()
-
-        forms = res.json()["data"]["forms"]
-        self.editableBsddIds = [el["id"] for el in forms]
+        self.get_user_forms()
 
     @task(10)
     def forms(self):
