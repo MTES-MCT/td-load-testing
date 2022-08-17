@@ -22,7 +22,7 @@ logger = structlog.get_logger()
 
 forms_query = base_forms_query.replace("#extra", "")
 
-form_query_filter_sent = base_forms_query.replace("#extra", 'status: SENT"')
+form_query_filter_sent = base_forms_query.replace("#extra", 'status: SENT')
 form_query = base_form_query
 
 
