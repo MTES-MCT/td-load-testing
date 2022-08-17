@@ -24,7 +24,7 @@ forms_query = base_forms_query.replace("#extra", "")
 
 form_query_filter_code = base_forms_query.replace("#extra", 'wasteCode: "06 01 01*"')
 form_query_filter_draft = base_forms_query.replace("#extra", "status: DRAFT")
-form_query = base_form_query  # .replace("#extra", "")
+form_query = base_form_query
 
 
 def random_custom_id():
@@ -82,7 +82,6 @@ class UIUser(TDUserMixin, FastHttpUser):
                 "variables": {"siret": self.siret},
             },
             name="ui-bsds-archived",
-            catch_response=True,
         )
         log_response_many(res, "bsds", "edges")
 
@@ -95,7 +94,6 @@ class UIUser(TDUserMixin, FastHttpUser):
                 "variables": {"siret": self.siret},
             },
             name="ui-bsds-draft",
-            catch_response=True,
         )
         log_response_many(res, "bsds", "edges")
 
@@ -108,7 +106,6 @@ class UIUser(TDUserMixin, FastHttpUser):
                 "variables": {"siret": self.siret},
             },
             name="ui-bsds-action",
-            catch_response=True,
         )
         log_response_many(res, "bsds", "edges")
 
@@ -121,7 +118,6 @@ class UIUser(TDUserMixin, FastHttpUser):
                 "variables": {"siret": self.siret},
             },
             name="ui-bsds-follow",
-            catch_response=True,
         )
         log_response_many(res, "bsds", "edges")
 
@@ -134,7 +130,6 @@ class UIUser(TDUserMixin, FastHttpUser):
                 "variables": {"siret": self.siret},
             },
             name="ui-bsds-to-collect",
-            catch_response=True,
         )
         log_response_many(res, "bsds", "edges")
 
@@ -147,7 +142,6 @@ class UIUser(TDUserMixin, FastHttpUser):
                 "variables": {"siret": self.siret},
             },
             name="ui-bsds-collected-for",
-            catch_response=True,
         )
         log_response_many(res, "bsds", "edges")
 
@@ -191,7 +185,6 @@ class UIUser(TDUserMixin, FastHttpUser):
                 "variables": {"id": random.choice(self.bsddIds)},
             },
             name="ui-form",
-            catch_response=True,
         )
         log_response_unique(res, "form")
 
@@ -231,19 +224,18 @@ class ApiUser(TDUserMixin, FastHttpUser):
             },
             headers=self.headers,
             name="api-form",
-            catch_response=True,
         )
         log_response_unique(res, "form")
 
-    @tag("slow-request")
-    @task
-    def forms_lifecycle(self):
-        self.client.post(
-            "",
-            json={"query": formslifecycle_query, "variables": {"siret": self.siret}},
-            headers=self.headers,
-            name="api-forms-lifecycle",
-        )
+    # @tag("slow-request")
+    # @task
+    # def forms_lifecycle(self):
+    #     self.client.post(
+    #         "",
+    #         json={"query": formslifecycle_query, "variables": {"siret": self.siret}},
+    #         headers=self.headers,
+    #         name="api-forms-lifecycle",
+    #     )
 
     @task
     def forms_by_waste_code(self):
@@ -252,7 +244,6 @@ class ApiUser(TDUserMixin, FastHttpUser):
             json={"query": form_query_filter_code, "variables": {"siret": self.siret}},
             headers=self.headers,
             name="api-forms-filter-waste_code",
-            catch_response=True,
         )
         log_response_many(res, "forms")
 
@@ -263,7 +254,6 @@ class ApiUser(TDUserMixin, FastHttpUser):
             json={"query": base_dasri_query},
             headers=self.headers,
             name="api-bsdasris-full",
-            catch_response=True,
         )
         log_response_many(res, "bsdasris", "edges")
 
@@ -274,7 +264,6 @@ class ApiUser(TDUserMixin, FastHttpUser):
             json={"query": light_dasri_query},
             headers=self.headers,
             name="api-bsdasris-light",
-            catch_response=True,
         )
         log_response_many(res, "bsdasris", "edges")
 
@@ -285,7 +274,6 @@ class ApiUser(TDUserMixin, FastHttpUser):
             json={"query": base_vhus_query},
             headers=self.headers,
             name="api-bsvhus",
-            catch_response=True,
         )
         log_response_many(res, "bsvhus", "edges")
 
@@ -296,7 +284,6 @@ class ApiUser(TDUserMixin, FastHttpUser):
             json={"query": base_bsdas_query},
             headers=self.headers,
             name="api-bsdas",
-            catch_response=True,
         )
         log_response_many(res, "bsdas", "edges")
 
@@ -307,7 +294,6 @@ class ApiUser(TDUserMixin, FastHttpUser):
             json={"query": base_bsffs_query},
             headers=self.headers,
             name="api-bsff",
-            catch_response=True,
         )
         log_response_many(res, "bsffs", "edges")
 
@@ -323,7 +309,6 @@ class ApiUser(TDUserMixin, FastHttpUser):
             },
             name="api-form-create",
             headers=self.headers,
-            catch_response=True,
         )
 
     @task(20)
@@ -340,7 +325,6 @@ class ApiUser(TDUserMixin, FastHttpUser):
             },
             name="api-form-update",
             headers=self.headers,
-            catch_response=True,
         )
 
     @task
