@@ -44,7 +44,6 @@ class TDUserMixin:
             json={"query": forms_query, "variables": {"siret": self.siret}},
             headers=self.headers,
             name=name,
-            catch_response=True,
         )
         return res
 

@@ -1,4 +1,4 @@
-from locust import task, FastHttpUser, constant, tag
+from locust import task, FastHttpUser, constant
 from .gql.queries import (
     me_query,
     bsd_query,
@@ -205,7 +205,7 @@ class ApiUser(TDUserMixin, FastHttpUser):
     def on_start(self):
         self.get_user_forms()
 
-    @task(5)
+    @task
     def forms(self):
         res = self.all_forms(name="api-forms-default")
 
@@ -237,15 +237,15 @@ class ApiUser(TDUserMixin, FastHttpUser):
     #         name="api-forms-lifecycle",
     #     )
 
-    @task
-    def forms_by_waste_code(self):
-        res = self.client.post(
-            "",
-            json={"query": form_query_filter_code, "variables": {"siret": self.siret}},
-            headers=self.headers,
-            name="api-forms-filter-waste_code",
-        )
-        log_response_many(res, "forms")
+    # @task
+    # def forms_by_waste_code(self):
+    #     res = self.client.post(
+    #         "",
+    #         json={"query": form_query_filter_code, "variables": {"siret": self.siret}},
+    #         headers=self.headers,
+    #         name="api-forms-filter-waste_code",
+    #     )
+    #     log_response_many(res, "forms")
 
     @task
     def bsdasris_full(self):
@@ -297,7 +297,7 @@ class ApiUser(TDUserMixin, FastHttpUser):
         )
         log_response_many(res, "bsffs", "edges")
 
-    @task
+    @task(5)
     def form_create(self):
         self.client.post(
             "",
@@ -311,7 +311,7 @@ class ApiUser(TDUserMixin, FastHttpUser):
             headers=self.headers,
         )
 
-    @task(20)
+    @task(25)
     def form_update(self):
         if not self.editableBsddIds:
             return
