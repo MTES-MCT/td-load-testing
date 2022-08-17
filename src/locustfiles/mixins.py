@@ -26,7 +26,7 @@ class TDUserMixin:
         try:
             forms = res_all.json()["data"]["forms"]
             self.bsddIds = [el["id"] for el in forms]
-        except KeyError:
+        except (KeyError,TypeError):
             logger.error("initial-all-forms", response=res_all.json())
         res_draft = self.draft_forms()
 
@@ -34,7 +34,7 @@ class TDUserMixin:
             forms = res_draft.json()["data"]["forms"]
 
             self.editableBsddIds = [el["id"] for el in forms]
-        except KeyError:
+        except (KeyError,TypeError):
             logger.error("initial-drafts-forms", response=res_draft.json())
 
     def all_forms(self, name="base-all-forms"):

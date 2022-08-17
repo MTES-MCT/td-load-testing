@@ -13,7 +13,7 @@ from .gql.queries import (
 )
 from .gql.mutations import form_create, dasri_create, form_update
 import random
-from .settings.locust_settings import DEFAULT_PASS, REDIRECT_LOGIN_URL
+from .settings.locust_settings import DEFAULT_PASS, REDIRECT_LOGIN_URL, WAIT_TIME
 from .mixins import TDUserMixin
 
 import structlog
@@ -32,7 +32,7 @@ def random_custom_id():
 
 
 class UIUser(TDUserMixin, FastHttpUser):
-    wait_time = constant(0.5)
+    wait_time = constant(WAIT_TIME)
 
     def on_start(self):
         with self.client.post(
@@ -143,7 +143,7 @@ class UIUser(TDUserMixin, FastHttpUser):
                     custom_id=custom_id,
                     user_email=self.email,
                 )
-        except KeyError:
+        except (KeyError,TypeError):
             logger.error("api-form-update error", response=res.json()["errors"])
 
     @task(5)
@@ -162,7 +162,7 @@ class UIUser(TDUserMixin, FastHttpUser):
 
 
 class ApiUser(TDUserMixin, FastHttpUser):
-    wait_time = constant(0.5)
+    wait_time = constant(WAIT_TIME)
 
     def __init__(self, environment):
         super().__init__(environment)
