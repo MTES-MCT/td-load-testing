@@ -6,7 +6,6 @@ import structlog
 
 logger = structlog.get_logger()
 forms_query = base_forms_query.replace("#extra", "")
-
 form_query_filter_draft = base_forms_query.replace("#extra", "status: DRAFT")
 
 

@@ -22,8 +22,7 @@ logger = structlog.get_logger()
 
 forms_query = base_forms_query.replace("#extra", "")
 
-form_query_filter_code = base_forms_query.replace("#extra", 'wasteCode: "06 01 01*"')
-form_query_filter_draft = base_forms_query.replace("#extra", "status: DRAFT")
+form_query_filter_sent = base_forms_query.replace("#extra", 'status: SENT"')
 form_query = base_form_query
 
 
@@ -237,15 +236,15 @@ class ApiUser(TDUserMixin, FastHttpUser):
     #         name="api-forms-lifecycle",
     #     )
 
-    # @task
-    # def forms_by_waste_code(self):
-    #     res = self.client.post(
-    #         "",
-    #         json={"query": form_query_filter_code, "variables": {"siret": self.siret}},
-    #         headers=self.headers,
-    #         name="api-forms-filter-waste_code",
-    #     )
-    #     log_response_many(res, "forms")
+    @task
+    def forms_by_status(self):
+        res = self.client.post(
+            "",
+            json={"query": form_query_filter_sent, "variables": {"siret": self.siret}},
+            headers=self.headers,
+            name="api-forms-filter-status",
+        )
+        log_response_many(res, "forms")
 
     @task
     def bsdasris_full(self):
@@ -297,7 +296,7 @@ class ApiUser(TDUserMixin, FastHttpUser):
         )
         log_response_many(res, "bsffs", "edges")
 
-    @task(5)
+    @task(4)
     def form_create(self):
         self.client.post(
             "",
