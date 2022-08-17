@@ -26,7 +26,7 @@ class TDUserMixin:
         try:
             forms = res_all.json()["data"]["forms"]
             self.bsddIds = [el["id"] for el in forms]
-        except (KeyError,TypeError):
+        except (KeyError, TypeError):
             logger.error("initial-all-forms", response=res_all.json())
         res_draft = self.draft_forms()
 
@@ -34,7 +34,7 @@ class TDUserMixin:
             forms = res_draft.json()["data"]["forms"]
 
             self.editableBsddIds = [el["id"] for el in forms]
-        except (KeyError,TypeError):
+        except (KeyError, TypeError):
             logger.error("initial-drafts-forms", response=res_draft.json())
 
     def all_forms(self, name="base-all-forms"):
@@ -44,6 +44,7 @@ class TDUserMixin:
             json={"query": forms_query, "variables": {"siret": self.siret}},
             headers=self.headers,
             name=name,
+            catch_response=True,
         )
         return res
 
@@ -52,6 +53,6 @@ class TDUserMixin:
             "",
             json={"query": form_query_filter_draft, "variables": {"siret": self.siret}},
             headers=self.headers,
-            name="api-forms-draft",
+            name=name,
         )
         return res

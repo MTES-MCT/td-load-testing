@@ -1,13 +1,13 @@
-from locust import task, FastHttpUser, constant
+from locust import task, FastHttpUser, constant, tag
 from .gql.queries import (
     me_query,
     bsd_query,
     base_form_query,
     base_forms_query,
     base_dasri_query,
-    base_bsda_query,
-    base_bsff_query,
-    base_vhu_query,
+    base_bsdas_query,
+    base_bsffs_query,
+    base_vhus_query,
     formslifecycle_query,
     light_dasri_query,
 )
@@ -29,6 +29,27 @@ form_query = base_form_query  # .replace("#extra", "")
 
 def random_custom_id():
     return "".join([str(random.randint(1, 9)) for _ in range(6)])
+
+
+def log_response_many(res, name, sub_field=None):
+    parsed = res.json()
+    try:
+        info = parsed["data"][name]
+        if sub_field:
+            info = info[sub_field]
+        logger.msg(name, data=len(info))
+    except Exception as e:
+        logger.error(name, fail=str(e), response=parsed)
+
+
+def log_response_unique(res, name):
+    parsed = res.json()
+    try:
+        info = parsed["data"][name]["id"]
+
+        logger.msg(name, data=info)
+    except Exception as e:
+        logger.error(name, fail=str(e), response=parsed)
 
 
 class UIUser(TDUserMixin, FastHttpUser):
@@ -54,69 +75,81 @@ class UIUser(TDUserMixin, FastHttpUser):
 
     @task
     def bsds_archived(self):
-        self.client.post(
+        res = self.client.post(
             "",
             json={
                 "query": bsd_query.replace("#tab", "isArchivedFor"),
                 "variables": {"siret": self.siret},
             },
             name="ui-bsds-archived",
+            catch_response=True,
         )
+        log_response_many(res, "bsds", "edges")
 
     @task
     def bsds_draft(self):
-        self.client.post(
+        res = self.client.post(
             "",
             json={
                 "query": bsd_query.replace("#tab", "isDraftFor"),
                 "variables": {"siret": self.siret},
             },
             name="ui-bsds-draft",
+            catch_response=True,
         )
+        log_response_many(res, "bsds", "edges")
 
     @task
     def bsds_action(self):
-        self.client.post(
+        res = self.client.post(
             "",
             json={
                 "query": bsd_query.replace("#tab", "isForActionFor"),
                 "variables": {"siret": self.siret},
             },
             name="ui-bsds-action",
+            catch_response=True,
         )
+        log_response_many(res, "bsds", "edges")
 
     @task
     def bsds_follow(self):
-        self.client.post(
+        res = self.client.post(
             "",
             json={
                 "query": bsd_query.replace("#tab", "isFollowFor"),
                 "variables": {"siret": self.siret},
             },
             name="ui-bsds-follow",
+            catch_response=True,
         )
+        log_response_many(res, "bsds", "edges")
 
     @task
     def bsds_to_collect(self):
-        self.client.post(
+        res = self.client.post(
             "",
             json={
                 "query": bsd_query.replace("#tab", "isToCollectFor"),
                 "variables": {"siret": self.siret},
             },
             name="ui-bsds-to-collect",
+            catch_response=True,
         )
+        log_response_many(res, "bsds", "edges")
 
     @task
     def bsds_collected_for(self):
-        self.client.post(
+        res = self.client.post(
             "",
             json={
                 "query": bsd_query.replace("#tab", "isCollectedFor"),
                 "variables": {"siret": self.siret},
             },
             name="ui-bsds-collected-for",
+            catch_response=True,
         )
+        log_response_many(res, "bsds", "edges")
 
     @task(10)
     def form_update(self):
@@ -143,22 +176,24 @@ class UIUser(TDUserMixin, FastHttpUser):
                     custom_id=custom_id,
                     user_email=self.email,
                 )
-        except (KeyError,TypeError):
+        except (KeyError, TypeError):
             logger.error("api-form-update error", response=res.json()["errors"])
 
-    @task(5)
+    @task(10)
     def form(self):
         if not self.bsddIds:
             return
 
-        self.client.post(
+        res = self.client.post(
             "",
             json={
                 "query": form_query,
                 "variables": {"id": random.choice(self.bsddIds)},
             },
             name="ui-form",
+            catch_response=True,
         )
+        log_response_unique(res, "form")
 
 
 class ApiUser(TDUserMixin, FastHttpUser):
@@ -177,16 +212,18 @@ class ApiUser(TDUserMixin, FastHttpUser):
     def on_start(self):
         self.get_user_forms()
 
-    @task(10)
-    def forms(self):
-        return self.all_forms(name="api-forms-default")
-
     @task(5)
+    def forms(self):
+        res = self.all_forms(name="api-forms-default")
+
+        log_response_many(res, "forms")
+
+    @task(10)
     def form(self):
         if not self.bsddIds:
             return
 
-        self.client.post(
+        res = self.client.post(
             "",
             json={
                 "query": form_query,
@@ -194,8 +231,11 @@ class ApiUser(TDUserMixin, FastHttpUser):
             },
             headers=self.headers,
             name="api-form",
+            catch_response=True,
         )
+        log_response_unique(res, "form")
 
+    @tag("slow-request")
     @task
     def forms_lifecycle(self):
         self.client.post(
@@ -207,59 +247,69 @@ class ApiUser(TDUserMixin, FastHttpUser):
 
     @task
     def forms_by_waste_code(self):
-        self.client.post(
+        res = self.client.post(
             "",
             json={"query": form_query_filter_code, "variables": {"siret": self.siret}},
             headers=self.headers,
             name="api-forms-filter-waste_code",
+            catch_response=True,
         )
+        log_response_many(res, "forms")
 
-    #
     @task
     def bsdasris_full(self):
-        self.client.post(
+        res = self.client.post(
             "",
             json={"query": base_dasri_query},
             headers=self.headers,
             name="api-bsdasris-full",
+            catch_response=True,
         )
+        log_response_many(res, "bsdasris", "edges")
 
     @task
     def bsdasris_light(self):
-        self.client.post(
+        res = self.client.post(
             "",
             json={"query": light_dasri_query},
             headers=self.headers,
             name="api-bsdasris-light",
+            catch_response=True,
         )
+        log_response_many(res, "bsdasris", "edges")
 
     @task
     def bsvhus(self):
-        self.client.post(
+        res = self.client.post(
             "",
-            json={"query": base_vhu_query},
+            json={"query": base_vhus_query},
             headers=self.headers,
             name="api-bsvhus",
+            catch_response=True,
         )
+        log_response_many(res, "bsvhus", "edges")
 
     @task
     def bsdas(self):
-        self.client.post(
+        res = self.client.post(
             "",
-            json={"query": base_bsda_query},
+            json={"query": base_bsdas_query},
             headers=self.headers,
             name="api-bsdas",
+            catch_response=True,
         )
+        log_response_many(res, "bsdas", "edges")
 
-    #
     @task
     def bsff(self):
-        self.client.post(
+        res = self.client.post(
             "",
-            json={"query": base_bsff_query},
+            json={"query": base_bsffs_query},
             headers=self.headers,
             name="api-bsff",
+            catch_response=True,
         )
+        log_response_many(res, "bsffs", "edges")
 
     @task
     def form_create(self):
@@ -273,6 +323,7 @@ class ApiUser(TDUserMixin, FastHttpUser):
             },
             name="api-form-create",
             headers=self.headers,
+            catch_response=True,
         )
 
     @task(20)
@@ -289,6 +340,7 @@ class ApiUser(TDUserMixin, FastHttpUser):
             },
             name="api-form-update",
             headers=self.headers,
+            catch_response=True,
         )
 
     @task

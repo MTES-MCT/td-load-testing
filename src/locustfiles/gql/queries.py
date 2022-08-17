@@ -777,7 +777,7 @@ query {
 
 """
 
-base_vhu_query = """
+base_vhus_query = """
  query GetBsvhus {
   bsvhus {
     edges {
@@ -849,7 +849,7 @@ base_vhu_query = """
 
 
 """
-base_bsff_query = """
+base_bsffs_query = """
 query Bsffs {
   bsffs {
     edges {
@@ -982,7 +982,7 @@ query Bsffs {
 
 """
 
-base_bsda_query = """query Bsdas {
+base_bsdas_query = """query Bsdas {
   bsdas {
     edges {
       node {
