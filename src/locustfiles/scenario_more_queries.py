@@ -91,7 +91,7 @@ class UIUser(TDUserMixin, FastHttpUser):
             },
             name="ui-bsds-archived",
         )
-        # log_response_many(res, "bsds", "edges")
+        log_response_many(res, "bsds", "edges")
 
     @task
     def bsds_draft(self):
@@ -161,7 +161,7 @@ class UIUser(TDUserMixin, FastHttpUser):
 
         bsd_id = random.choice(self.editableBsddIds)
 
-        res = self.client.post(
+        self.client.post(
             "",
             json={
                 "query": form_update,
