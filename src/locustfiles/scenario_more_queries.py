@@ -13,7 +13,12 @@ from .gql.queries import (
 )
 from .gql.mutations import form_create, dasri_create, form_update
 import random
-from .settings.locust_settings import DEFAULT_PASS, REDIRECT_LOGIN_URL, WAIT_TIME
+from .settings.locust_settings import (
+    DEFAULT_PASS,
+    REDIRECT_LOGIN_URL,
+    WAIT_TIME,
+    LOGGING_DISABLED,
+)
 from .mixins import TDUserMixin
 
 import structlog
@@ -22,7 +27,7 @@ logger = structlog.get_logger()
 
 forms_query = base_forms_query.replace("#extra", "")
 
-form_query_filter_sent = base_forms_query.replace("#extra", 'status: SENT')
+form_query_filter_sent = base_forms_query.replace("#extra", "status: SENT")
 form_query = base_form_query
 
 
@@ -31,6 +36,8 @@ def random_custom_id():
 
 
 def log_response_many(res, name, sub_field=None):
+    if LOGGING_DISABLED:
+        return
     parsed = res.json()
     try:
         info = parsed["data"][name]
@@ -42,6 +49,8 @@ def log_response_many(res, name, sub_field=None):
 
 
 def log_response_unique(res, name):
+    if LOGGING_DISABLED:
+        return
     parsed = res.json()
     try:
         info = parsed["data"][name]["id"]
@@ -82,7 +91,7 @@ class UIUser(TDUserMixin, FastHttpUser):
             },
             name="ui-bsds-archived",
         )
-        log_response_many(res, "bsds", "edges")
+        # log_response_many(res, "bsds", "edges")
 
     @task
     def bsds_draft(self):
@@ -161,16 +170,6 @@ class UIUser(TDUserMixin, FastHttpUser):
             name="ui-form-update",
         )
         logger.msg("ui-form-update", id=bsd_id, custom_id=custom_id)
-        try:
-            if res.json()["data"]["updateForm"]["customId"] != custom_id:
-                logger.error(
-                    "api-form-update-fail",
-                    bsd_id=bsd_id,
-                    custom_id=custom_id,
-                    user_email=self.email,
-                )
-        except (KeyError, TypeError):
-            logger.error("api-form-update error", response=res.json()["errors"])
 
     @task(10)
     def form(self):
@@ -206,9 +205,14 @@ class ApiUser(TDUserMixin, FastHttpUser):
 
     @task
     def forms(self):
-        res = self.all_forms(name="api-forms-default")
 
-        log_response_many(res, "forms")
+        res = self.client.post(
+            "",
+            json={"query": forms_query, "variables": {"siret": self.siret}},
+            headers=self.headers,
+            name="api-forms",
+        )
+        return res
 
     @task(10)
     def form(self):
