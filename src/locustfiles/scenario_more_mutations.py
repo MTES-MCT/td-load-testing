@@ -1,16 +1,10 @@
-from locust import task, HttpUser
-from .gql.queries import (
-    me_query,
-    bsd_query,
-    base_form_query,
-    base_bsda_query,
-    base_vhu_query,
-    light_dasri_query,
-)
-from .gql.mutations import form_create, dasri_create
+from locust import HttpUser, task
 
-from .settings.locust_settings import DEFAULT_PASS
+from .gql.mutations import dasri_create, form_create
+from .gql.queries import (base_bsda_query, base_form_query, base_vhu_query,
+                          bsd_query, light_dasri_query, me_query)
 from .mixins import TDUserMixin
+from .settings.locust_settings import DEFAULT_PASS
 
 form_query = base_form_query.replace("#extra", "")
 

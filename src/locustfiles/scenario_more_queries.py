@@ -1,27 +1,16 @@
-from locust import task, FastHttpUser, constant
-from .gql.queries import (
-    me_query,
-    bsd_query,
-    base_form_query,
-    base_forms_query,
-    base_dasri_query,
-    base_bsdas_query,
-    base_bsffs_query,
-    base_vhus_query,
-    formslifecycle_query,
-    light_dasri_query,
-)
-from .gql.mutations import form_create, dasri_create, form_update
 import random
-from .settings.locust_settings import (
-    DEFAULT_PASS,
-    REDIRECT_LOGIN_URL,
-    WAIT_TIME,
-    LOGGING_DISABLED,
-)
-from .mixins import TDUserMixin
 
 import structlog
+from locust import FastHttpUser, constant, task
+
+from .gql.mutations import dasri_create, form_create, form_update
+from .gql.queries import (base_bsdas_query, base_bsffs_query, base_dasri_query,
+                          base_form_query, base_forms_query, base_vhus_query,
+                          bsd_query, formslifecycle_query, light_dasri_query,
+                          me_query)
+from .mixins import TDUserMixin
+from .settings.locust_settings import (DEFAULT_PASS, LOGGING_DISABLED,
+                                       REDIRECT_LOGIN_URL, WAIT_TIME)
 
 logger = structlog.get_logger()
 
